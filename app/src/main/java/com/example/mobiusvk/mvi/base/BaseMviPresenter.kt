@@ -20,7 +20,18 @@ abstract class BaseMviPresenter<V: BaseView, VS> {
     }
 
     var view: V? = null
+
+    private val intentRelaysBinders = arrayListOf<Any>()
+
     private val intentList = mutableListOf<Observable<Any>>()
+
+    private var viewStateConsumer: ViewStateConsumer<V, VS>? = null
+
+    private var viewStateDisposable: Disposable? = null
+
+    private var viewRelayConsumerDisposable: Disposable? = null
+
+    private var intentDisposables: CompositeDisposable? = null
 
     fun attachView(view: V) {
         this.view = view
@@ -41,53 +52,11 @@ abstract class BaseMviPresenter<V: BaseView, VS> {
         this.view = null
     }
 
-    protected interface ViewIntentBinder<V : BaseView, I> {
-        @NonNull
-        fun bind(@NonNull view: V): Observable<I>
-    }
-
-    private inner class IntentRelayBinderPair<I>(
-        val intentRelaySubject: Subject<I>,
-        val intentBinder: ViewIntentBinder<V, I>
-    )
-
-    private val intentRelaysBinders = arrayListOf<Any>()
-
     @MainThread
     protected fun <I> intent(binder: ViewIntentBinder<V, I>): Observable<I> {
         val intentRelay = UnicastSubject.create<I>()
         intentRelaysBinders.add(IntentRelayBinderPair<I>(intentRelay, binder))
         return intentRelay
-    }
-
-    private var viewStateConsumer: ViewStateConsumer<V, VS>? = null
-
-    private var viewStateDisposable: Disposable? = null
-
-    private var viewRelayConsumerDisposable: Disposable? = null
-
-    private var intentDisposables: CompositeDisposable? = null
-
-    protected interface ViewStateConsumer<V : BaseView, VS> {
-        fun accept(view: V, viewState: VS)
-    }
-
-    internal class DisposableViewStateObserver<VS>(private val subject: BehaviorSubject<VS>) :
-        DisposableObserver<VS>() {
-
-        override fun onNext(value: VS) {
-            subject.onNext(value)
-        }
-
-        override fun onError(e: Throwable) {
-            throw IllegalStateException(
-                "ViewState observable must not reach error state - onError()", e
-            )
-        }
-
-        override fun onComplete() {
-            // ViewState observable never completes so ignore any complete event
-        }
     }
 
     @MainThread
@@ -171,6 +140,15 @@ abstract class BaseMviPresenter<V: BaseView, VS> {
         return intentRelay
     }
 
+    protected interface ViewStateConsumer<V : BaseView, VS> {
+        fun accept(view: V, viewState: VS)
+    }
+
+    protected interface ViewIntentBinder<V : BaseView, I> {
+        @NonNull
+        fun bind(@NonNull view: V): Observable<I>
+    }
+
     internal class DisposableIntentObserver<I>(private val subject: Subject<I>) : DisposableObserver<I>() {
 
         override fun onNext(value: I) {
@@ -185,4 +163,27 @@ abstract class BaseMviPresenter<V: BaseView, VS> {
             subject.onComplete()
         }
     }
+
+    internal class DisposableViewStateObserver<VS>(private val subject: BehaviorSubject<VS>) :
+        DisposableObserver<VS>() {
+
+        override fun onNext(value: VS) {
+            subject.onNext(value)
+        }
+
+        override fun onError(e: Throwable) {
+            throw IllegalStateException(
+                "ViewState observable must not reach error state - onError()", e
+            )
+        }
+
+        override fun onComplete() {
+            // ViewState observable never completes so ignore any complete event
+        }
+    }
+
+    private inner class IntentRelayBinderPair<I>(
+        val intentRelaySubject: Subject<I>,
+        val intentBinder: ViewIntentBinder<V, I>
+    )
 }

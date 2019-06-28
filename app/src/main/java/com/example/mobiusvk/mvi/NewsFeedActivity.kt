@@ -34,7 +34,6 @@ class NewsFeedActivity: AppCompatActivity(), NewsFeedView {
         setContentView(R.layout.activity_news_feed)
         initFeed()
         presenter.attachView(this)
-//        presenter.loadStoredNews()
     }
 
     override fun onDestroy() {
