@@ -1,9 +1,9 @@
 package com.example.mobiusvk.mvi
 
-import com.example.mobiusvk.mvi.base.BaseView
+import com.pdffiller.signnownew.mvi_common.BaseMviView
 import io.reactivex.Observable
 
-interface NewsFeedView : BaseView {
+interface NewsFeedView : BaseMviView {
 
     fun loadNewsIntent(): Observable<Boolean>
 

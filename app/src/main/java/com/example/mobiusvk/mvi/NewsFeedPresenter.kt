@@ -1,6 +1,6 @@
 package com.example.mobiusvk.mvi
 
-import com.example.mobiusvk.mvi.base.BaseMviPresenter
+import com.pdffiller.signnownew.mvi_common.BaseMviPresenter
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
